@@ -2,14 +2,14 @@
 
 void X64::optimize() {
 	while (
-		pass_peephole(mc) ||
-		pass_unused_labels(mc)
+		pass_peephole() ||
+		pass_unused_labels()
 		) {
 	}
 }
 
 
-bool X64::pass_peephole(std::vector<MC>& mc) {
+bool X64::pass_peephole() {
 	bool changed = false;
 
 	using enum MC::Opcode;
@@ -348,7 +348,7 @@ bool X64::pass_peephole(std::vector<MC>& mc) {
 	return changed;
 }
 
-bool X64::pass_unused_labels(std::vector<MC>& mc) {
+bool X64::pass_unused_labels() {
 	bool changed = false;
 	std::unordered_set<int> referenced_labels;
 

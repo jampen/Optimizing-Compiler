@@ -392,10 +392,13 @@ struct X64 {
 	void push_mc(const MC& mci);
 
 	// Optimization
-	bool pass_peephole(std::vector<MC>& mc);
-	bool pass_unused_labels(std::vector<MC>& mc);
+	// implemented in x64-optimizer.cpp
 	void optimize();
+	bool pass_peephole();
+	bool pass_unused_labels();
+
 	// Allocation
+	// implemented in x64-allocator.cpp
 	void produces(const ValueId value_id, const ValueLifetime lifetime);
 	void consume(const ValueId value_id);
 	TypeSize type_size(const AST::Type& type);

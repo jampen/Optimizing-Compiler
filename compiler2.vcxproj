@@ -32,6 +32,7 @@
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="ast.hpp" />
     <ClCompile Include="token.cpp" />
+    <ClCompile Include="x64-allocator.cpp" />
     <ClCompile Include="x64-optimizer.cpp" />
     <ClCompile Include="x64.cpp" />
   </ItemGroup>
