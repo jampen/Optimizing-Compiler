@@ -31,7 +31,13 @@ bld/
 [Oo]bj/
 [Oo]ut/
 [Ll]og/
-[Ll]ogs/
+[Ll]ogs
+
+# Executables
+*.exe
+
+# Objects
+*.o
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/

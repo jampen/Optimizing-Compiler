@@ -35,9 +35,12 @@
     <ClCompile Include="x64.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".gitattributes" />
+    <None Include=".gitignore" />
     <None Include="prog.in" />
     <None Include="prog.S" />
     <None Include="prog.Sold" />
+    <None Include="README.md" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
