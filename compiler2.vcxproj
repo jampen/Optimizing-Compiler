@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bb.hpp" />
+    <ClInclude Include="cfg.hpp" />
     <ClInclude Include="irgen.hpp" />
     <ClInclude Include="ir.hpp" />
     <ClInclude Include="is_optimizer.hpp" />

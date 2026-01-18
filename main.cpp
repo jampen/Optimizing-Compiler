@@ -88,7 +88,7 @@ static std::string v(ValueId id) {
 
 void out(IRGen& irgen, const std::vector<Inst>& inst, std::ostream& os) {
 	for (const auto& ins : inst) {
-		os << "; ";
+		// os << "; ";
 		if (ins.opcode == Opcode::Label) {
 			os << std::format("L{}:", ins.operands[0]) << '\n';
 			continue;
@@ -150,13 +150,13 @@ static void bbg_out(IRGen& irgen, BasicBlockGenerator& bbg, std::ostream& os) {
 	for (const auto& [fn_name, bbs] : bbg.fn_to_bbs) {
 		os << "; func " << fn_name << '\n';
 		for (int i = 0; i < bbs.size(); ++i) {
-			os << std::format("; BB{}:\n", i);
+			os << std::format("BB{}:\n", i);
 			out(irgen, bbs.at(i).inst, os);
 		}
 	}
 }
 
-Parser load(const string& filename) {
+static Parser load(const string& filename) {
 	string src;
 	ifstream in(filename);
 	getline(in, src, '\0');

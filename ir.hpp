@@ -1,6 +1,7 @@
 #pragma once
 #include "ast.hpp"
 #include <unordered_map>
+#include <list>
 
 using ValueId = int;
 using LabelId = ValueId;
@@ -81,6 +82,7 @@ struct Inst {
 		return false;
 	}
 };
+
 
 struct Function {
 	LabelId pro_lbl{ NoValue };

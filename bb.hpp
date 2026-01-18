@@ -1,11 +1,12 @@
 #pragma once
-#include "irgen.hpp"
+#include "ir.hpp"
 
 struct BasicBlock {
-	LabelId lbl_entry{};
+	LabelId lbl_entry;
 	std::vector<Inst> inst;
 	std::vector<BasicBlock*> successors;
 };
+
 
 struct BasicBlockGenerator {
 	void module(const Module& mod);

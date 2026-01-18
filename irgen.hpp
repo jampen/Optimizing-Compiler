@@ -2,6 +2,7 @@
 #include "ir.hpp"
 #include <optional>
 
+
 struct IRGen {
 	struct Scope {
 		std::unordered_map<std::string, ValueId> symbols;
@@ -53,8 +54,6 @@ struct IRGen {
 	LabelId new_label();
 
 	bool is_constant(const ValueId value_id);
-
-	LabelId get_label(const ValueId value_id);
 
 	std::vector<std::string> errors;
 	std::vector<Value> values;

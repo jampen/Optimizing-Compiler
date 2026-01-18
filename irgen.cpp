@@ -97,6 +97,7 @@ ValueId IRGen::if_stmt(const AST::IfStmt& if_stmt) {
 		push_label(l_false);
 	}
 
+	push_inst(Opcode::Jump, NoValue, { l_done });
 	push_label(l_done);
 	return NoValue;
 }
@@ -174,7 +175,9 @@ ValueId IRGen::if_expr(const AST::IfExpr& if_expr) {
 	ValueId val_iffalse = gen(if_expr.else_expr);
 	push_inst(Opcode::Load, result, { val_iffalse });
 
+	push_inst(Opcode::Jump, NoValue, { l_done });
 	push_label(l_done);
+
 	return result;
 }
 

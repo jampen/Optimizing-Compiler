@@ -13,7 +13,10 @@ std::vector<BasicBlock> BasicBlockGenerator::function(const Function& fn) {
 	std::vector<BasicBlock> blocks;
 	bool push_block = true;
 
-	for (BasicBlock* bb{}; const auto& ins : fn.insts) {
+	BasicBlock* bb{};
+	for (std::size_t i = 0; i < fn.insts.size(); ++i) {
+		auto& ins = fn.insts[i];
+
 		if (push_block) {
 			bb = &blocks.emplace_back();
 			push_block = false;
@@ -30,6 +33,14 @@ std::vector<BasicBlock> BasicBlockGenerator::function(const Function& fn) {
 		if (ins.is_block_terminator()) {
 			push_block = true;
 			continue;
+		}
+
+		if (i + 1 != fn.insts.size()) {
+			const auto& n = fn.insts[i + 1];
+			if (n.opcode == Opcode::Label && n.operands[0] != bb->lbl_entry) {
+				push_block = true;
+
+			}
 		}
 	}
 
@@ -60,16 +71,19 @@ void BasicBlockGenerator::link_blocks(std::vector<BasicBlock>& blocks, const Fun
 			bb.successors.push_back(lbl_to_bb.at(ins.operands[0]));
 			continue;
 		}
-		if (ins.opcode == Branch) {
+		else if (ins.opcode == Branch) {
 			bb.successors.push_back(lbl_to_bb.at(ins.operands[1]));
 			bb.successors.push_back(lbl_to_bb.at(ins.operands[2]));
 			continue;
 		}
-		if (ins.opcode == Return) {
+		else if (ins.opcode == Return) {
 			bb.successors.push_back(lbl_to_bb.at(fn.epi_lbl));
 			continue;
 		} else {
+			// Insert a fallthrough if we are at the end of the block
+			// and it has no terminator.
 			if (i + 1 < blocks.size()) {
+				bb.inst.push_back(Inst{ Jump, NoValue, {blocks[i + 1].lbl_entry} });
 				bb.successors.push_back(&blocks[i + 1]);
 			}
 		}
