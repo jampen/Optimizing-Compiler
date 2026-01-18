@@ -437,7 +437,7 @@ struct X64 {
 
 	// Emission
 	void module();
-	void function(const std::string& name, const Function& fn);
+	void function(const std::string& name, const CFGFunction& fn);
 	void instruction(std::vector<MC>& mc, const Inst& inst);
 
 	// Optimization

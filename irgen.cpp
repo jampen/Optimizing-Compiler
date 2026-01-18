@@ -1,4 +1,5 @@
-#include "IRGen.hpp"
+#include "irgen.hpp"
+#include "bb.hpp"
 #include <utility>
 #include <iostream>
 #include <format>
@@ -28,6 +29,23 @@ ValueId IRGen::root(const AST::Root& root) {
 	for (const auto& fn : root.functions) {
 		gen(fn);
 	}
+
+	BasicBlockGenerator bbg;
+
+	for (const auto& [fn_name, fn] : functions) {
+		auto blocks = bbg.function(fn);
+		bbg.link_blocks(blocks, fn);
+		bbg.fn_to_bbs[fn_name] = blocks;
+	}
+
+	// Generate basic blocks
+	for (const auto& [fn_name, fn] : functions) {
+		const auto& bbs = bbg.fn_to_bbs.at(fn_name);
+		auto& mf = mod.functions[fn_name];
+		mf.blocks = bbs;
+		mf.values = fn.values;
+	}
+
 	return NoValue;
 }
 
@@ -59,7 +77,7 @@ ValueId IRGen::function(const AST::Function& function) {
 		push_error(std::format("function {} is already defined", function.name));
 		return NoValue;
 	}
-	current_fn = &mod.functions[function.name];
+	current_fn = &functions[function.name];
 	current_fn->pro_lbl = new_label();
 	push_label(current_fn->pro_lbl);
 	current_fn->epi_lbl = new_label();
@@ -170,7 +188,7 @@ ValueId IRGen::if_expr(const AST::IfExpr& if_expr) {
 	ValueId result = new_value(values[val_iftrue].type);
 	push_inst(Opcode::Load, result, { val_iftrue });
 	push_inst(Opcode::Jump, NoValue, { l_done });
-	
+
 	push_label(l_false);
 	ValueId val_iffalse = gen(if_expr.else_expr);
 	push_inst(Opcode::Load, result, { val_iffalse });
@@ -310,4 +328,91 @@ LabelId IRGen::new_label() {
 
 bool IRGen::is_constant(const ValueId value_id) {
 	return constants.contains(value_id);
+}
+
+void BasicBlockGenerator::module(const Module& mod) {
+}
+
+
+std::vector<BasicBlock> BasicBlockGenerator::function(const LinearFunction& fn) {
+	std::vector<BasicBlock> blocks;
+	bool push_block = true;
+
+	BasicBlock* bb{};
+	for (std::size_t i = 0; i < fn.insts.size(); ++i) {
+		auto& ins = fn.insts[i];
+
+		if (push_block) {
+			bb = &blocks.emplace_back();
+			push_block = false;
+
+			if (ins.opcode == Opcode::Label) {
+				bb->lbl_entry = ins.operands[0];
+			} else {
+				throw std::runtime_error("internal error: BB's should always begin with a label");
+			}
+		}
+
+		bb->inst.push_back(ins);
+
+		if (ins.is_block_terminator()) {
+			push_block = true;
+			continue;
+		}
+
+		if (i + 1 != fn.insts.size()) {
+			const auto& n = fn.insts[i + 1];
+			if (n.opcode == Opcode::Label && n.operands[0] != bb->lbl_entry) {
+				push_block = true;
+
+			}
+		}
+	}
+
+	return blocks;
+}
+
+void BasicBlockGenerator::link_blocks(std::vector<BasicBlock>& blocks, const LinearFunction& fn) {
+	std::unordered_map<LabelId, BasicBlock*> lbl_to_bb;
+
+	using enum Opcode;
+
+	for (auto& bb : blocks) {
+		for (const auto& ins : bb.inst) {
+			if (ins.opcode == Label) {
+				lbl_to_bb[ins.operands[0]] = &bb;
+				continue;
+			}
+		}
+	}
+
+	// Look at the last instruction to connect the blocks
+	for (std::size_t i = 0; i < blocks.size(); ++i) {
+		auto& bb = blocks[i];
+		if (bb.inst.empty()) continue;
+		auto& ins = bb.inst.back();
+
+		if (ins.opcode == Jump) {
+			bb.successors.push_back(lbl_to_bb.at(ins.operands[0]));
+			continue;
+		} else if (ins.opcode == Branch) {
+			bb.successors.push_back(lbl_to_bb.at(ins.operands[1]));
+			bb.successors.push_back(lbl_to_bb.at(ins.operands[2]));
+			continue;
+		} else if (ins.opcode == Return) {
+			bb.successors.push_back(lbl_to_bb.at(fn.epi_lbl));
+			continue;
+		} else {
+			// Insert a fallthrough if we are at the end of the block
+			// and it has no terminator.
+			if (i + 1 < blocks.size()) {
+				bb.inst.push_back(Inst{ Jump, NoValue, {blocks[i + 1].lbl_entry} });
+				bb.successors.push_back(&blocks[i + 1]);
+			}
+		}
+	}
+}
+
+const std::vector<BasicBlock>& BasicBlockGenerator::get_fn_bbs(const std::string& function_name) const {
+	return fn_to_bbs.at(function_name);
 }

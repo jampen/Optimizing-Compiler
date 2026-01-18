@@ -88,7 +88,7 @@ static std::string v(ValueId id) {
 
 void out(IRGen& irgen, const std::vector<Inst>& inst, std::ostream& os) {
 	for (const auto& ins : inst) {
-		// os << "; ";
+		 os << "; ";
 		if (ins.opcode == Opcode::Label) {
 			os << std::format("L{}:", ins.operands[0]) << '\n';
 			continue;
@@ -134,10 +134,9 @@ void out(IRGen& irgen, const std::vector<Inst>& inst, std::ostream& os) {
 }
 
 void out(IRGen& irgen, X64& x64, std::ostream& os, bool comments = false) {
-	for (const auto& [func_name, func] : irgen.mod.functions) {
-		os << format("; func {}", func_name) << '\n';
-		out(irgen, func.insts, os);
-	}
+	//for (const auto& [func_name, func] : irgen.mod.functions) {
+	//	os << format("; func {}", func_name) << '\n';
+	//}
 	os << ";--------------\n";
 	string line;
 	while (getline(x64.function_textstream, line, '\n')) {
@@ -150,7 +149,7 @@ static void bbg_out(IRGen& irgen, BasicBlockGenerator& bbg, std::ostream& os) {
 	for (const auto& [fn_name, bbs] : bbg.fn_to_bbs) {
 		os << "; func " << fn_name << '\n';
 		for (int i = 0; i < bbs.size(); ++i) {
-			os << std::format("BB{}:\n", i);
+			os << std::format("; BB{}:\n", i);
 			out(irgen, bbs.at(i).inst, os);
 		}
 	}
@@ -182,22 +181,12 @@ int main() {
 			cout << format("error: {}", err) << '\n';
 		}
 	}
-
-	X64Optimizer optimizer{ irgen };
-	X64 x64{ irgen, optimizer };
-
-	x64.module();
-
-	BasicBlockGenerator bbg{};
-	bbg.module(irgen.mod);
-
-	puts("ASSEMBLY OUTPUT IS DISABLED IN MAIN");
-	bbg_out(irgen, bbg, cout);
-
-	return 0;
-
+	
 	ofstream outf("prog.S");
-	out(irgen, x64, outf);
-	out(irgen, x64, cout, true);
+	X64Optimizer optimizer{ irgen };
+
+	X64 x64{ irgen, optimizer };
+	x64.module();
+	out(irgen, x64, outf, true);
 	return 0;
 }

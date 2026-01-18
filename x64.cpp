@@ -1,5 +1,6 @@
 #include"x64.hpp"
 #include "x64-optimizer.hpp"
+#include "bb.hpp"
 
 #include <format>
 
@@ -61,24 +62,25 @@ void X64::module() {
 	}
 }
 
-void X64::function(const std::string& name, const Function& fn) {
-	const auto align_16 = [](const auto value) {
+void X64::function(const std::string& name, const CFGFunction& fn) {
+	const auto align_16 = [](const std::size_t value) {
 		return (value + 15) & ~std::size_t(15);
 	};
 
 	function_mc = {};
-	function_mc.epi_lbl = fn.epi_lbl;
-
+	function_mc.epi_lbl = fn.blocks.back().lbl_entry;
 	
 	// generate machine code
-	for (const auto& inst : fn.insts) {
-		instruction(function_mc.block, inst);
+
+	for (const auto& bb : fn.blocks) {
+		for (const auto& inst : bb.inst) {
+			instruction(function_mc.block, inst);
+		}
 	}
 
 	const int ss = align_16(function_mc.stack_size);
 
 	const auto gen_prologue = [&]() {
-
 		if (ss) {
 			function_mc.claimed_callee_saved_regs.emplace(Reg::rbp);
 			function_mc.prologue.push_back(MC::push(reg(Reg::rbp)));

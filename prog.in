@@ -1,7 +1,14 @@
 function main() : int {
+	var sum : int = 0
     var x : int = 0
-    var y : int = 0
-    y = if x < 5 then 1 else 2
-    while x < 3 do x = x + 1
-    return x + y
+	
+	while x < 5 {
+		var y : int = 0
+		while y < 5 {
+			y = y + 1
+			sum = sum + 1
+		}
+		x = x + 1
+	}
+	return sum
 }

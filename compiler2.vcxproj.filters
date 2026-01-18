@@ -74,6 +74,9 @@
     <ClCompile Include="bb.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ir.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="prog.in" />

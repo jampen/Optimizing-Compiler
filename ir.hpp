@@ -84,14 +84,25 @@ struct Inst {
 };
 
 
-struct Function {
-	LabelId pro_lbl{ NoValue };
-	LabelId epi_lbl{ NoValue };
+struct LinearFunction {
+	LabelId pro_lbl{};
+	LabelId epi_lbl{};
 	std::vector<Value> values;
 	std::vector<Inst> insts;
 	std::unordered_map<std::string, ValueId> locals;
 };
 
+struct BasicBlock {
+	LabelId lbl_entry;
+	std::vector<Inst> inst;
+	std::vector<BasicBlock*> successors;
+};
+
+struct CFGFunction {
+	std::vector<Value> values;
+	std::vector<BasicBlock> blocks;
+};
+
 struct Module {
-	std::unordered_map<std::string, Function> functions;
+	std::unordered_map<std::string, CFGFunction> functions;
 };

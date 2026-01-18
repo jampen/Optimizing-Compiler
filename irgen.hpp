@@ -2,6 +2,14 @@
 #include "ir.hpp"
 #include <optional>
 
+struct BasicBlockGenerator {
+	void module(const Module& mod);
+	std::vector<BasicBlock> function(const LinearFunction& fn);
+	void link_blocks(std::vector<BasicBlock>& blocks, const LinearFunction& fn);
+	const std::vector<BasicBlock>& get_fn_bbs(const std::string& function_name) const;
+	std::unordered_map<std::string, std::vector<BasicBlock>> fn_to_bbs;
+};
+
 
 struct IRGen {
 	struct Scope {
@@ -58,9 +66,10 @@ struct IRGen {
 	std::vector<std::string> errors;
 	std::vector<Value> values;
 	std::unordered_map<ValueId, Constant> constants;
+	std::unordered_map<std::string, LinearFunction> functions;
 	std::vector<Scope> scopes;
 	LabelId next_label_id{};
 
 	Module mod;
-	Function* current_fn{};
+	LinearFunction* current_fn{};
 };
