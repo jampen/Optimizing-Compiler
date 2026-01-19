@@ -1,5 +1,4 @@
 #include "irgen.hpp"
-#include "bb.hpp"
 #include <utility>
 #include <iostream>
 #include <format>
@@ -29,8 +28,6 @@ ValueId IRGen::root(const AST::Root& root) {
 	for (const auto& fn : root.functions) {
 		gen(fn);
 	}
-
-	BasicBlockGenerator bbg;
 
 	for (const auto& [fn_name, fn] : functions) {
 		auto blocks = bbg.function(fn);

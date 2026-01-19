@@ -69,7 +69,7 @@ struct IRGen {
 	std::unordered_map<std::string, LinearFunction> functions;
 	std::vector<Scope> scopes;
 	LabelId next_label_id{};
-
 	Module mod;
 	LinearFunction* current_fn{};
+	BasicBlockGenerator bbg;
 };

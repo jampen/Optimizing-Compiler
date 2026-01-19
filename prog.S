@@ -1,22 +1,21 @@
+;--------------
 bits 64
 section .text
-global main
-main:
+global fib
+fib:
 	xor rcx, rcx
 	xor rdx, rdx
+	mov r8, 1
 .L2:
-	cmp rdx, 5
+	cmp rcx, 5
 	jge .L4
-	xor r9, r9
-.L5:
-	cmp r9, 5
-	jge .L7
-	add r9, 1
+	mov rax, rdx
+	add rax, r8
+	mov r10, rax
+	mov rdx, r8
+	mov r8, r10
 	add rcx, 1
-	jmp .L5
-.L7:
-	add rdx, 1
 	jmp .L2
 .L4:
-	mov rax, rcx
+	mov rax, rdx
 	ret

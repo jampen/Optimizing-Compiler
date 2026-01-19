@@ -19,7 +19,6 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="bb.hpp" />
     <ClInclude Include="cfg.hpp" />
     <ClInclude Include="irgen.hpp" />
     <ClInclude Include="ir.hpp" />
@@ -31,7 +30,6 @@
     <ClInclude Include="x64.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="bb.cpp" />
     <ClCompile Include="ir.cpp" />
     <ClCompile Include="irgen.cpp" />
     <ClCompile Include="main.cpp" />
@@ -47,6 +45,7 @@
     <None Include=".gitignore" />
     <None Include="prog.in" />
     <None Include="optimized.S" />
+    <None Include="prog.ir" />
     <None Include="prog.S" />
     <None Include="unoptimized.S" />
     <None Include="README.md" />

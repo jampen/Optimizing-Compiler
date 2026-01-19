@@ -102,7 +102,6 @@ struct AST {
 		Ptr returns;
 	};
 
-
 	struct IfStmt {
 		Ptr condition;
 		Ptr then_stmt;

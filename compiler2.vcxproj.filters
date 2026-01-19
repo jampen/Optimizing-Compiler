@@ -42,9 +42,6 @@
     <ClInclude Include="cfg.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="bb.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -71,9 +68,6 @@
     <ClCompile Include="x64-allocator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="bb.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="ir.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -86,5 +80,6 @@
     <None Include="optimized.S" />
     <None Include="unoptimized.S" />
     <None Include="prog.S" />
+    <None Include="prog.ir" />
   </ItemGroup>
 </Project>
