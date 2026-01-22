@@ -30,10 +30,12 @@ struct Parser {
 	AST::Ptr parse_stmt();
 	AST::Ptr parse_expr();
 	
+	AST::Ptr parse_tuple(int size_limit = -1);
 	AST::Ptr parse_if(Context context);
 	AST::Ptr parse_while(Context context);
 	AST::Ptr parse_return();
-	
+
+
 	AST::Ptr parse_function();
 	AST::Ptr parse_block();
 	AST::Ptr parse_parameters();

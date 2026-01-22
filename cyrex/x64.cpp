@@ -221,7 +221,7 @@ X64::Operand X64::operand(const ValueId value_id) {
 	if (locations.contains(value_id)) {
 		return location(value_id);
 	}
-	if (ir.constants.contains(value_id)) {
+	if (ir.literals.contains(value_id)) {
 		return constant(value_id);
 	}
 	throw std::runtime_error("internal error: use of unallocated value");
@@ -231,7 +231,7 @@ X64::Operand X64::constant(const ValueId constant_value_id) {
 	// It must be a constant
 	return std::visit([&](auto&& v) {
 		return Operand::make_imm((int64_t)v, constant_value_id);
-	}, ir.constants.at(constant_value_id).data);
+	}, ir.literals.at(constant_value_id).data);
 }
 
 

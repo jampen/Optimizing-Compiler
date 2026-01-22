@@ -65,6 +65,8 @@ ValueId IRGen::expr(const AST::Expr& expr) {
 		[&](const AST::BinaryExpr& x) { return binary_expr(x);  },
 		[&](const AST::AssignExpr& x) { return assign_expr(x);  },
 		[&](const AST::IdentifierExpr& x) {return identifier_expr(x); },
+		[&](const AST::TupleExpr& x) { return NoValue;  },
+		[&](const AST::TupleAssignExpr& x) { return NoValue;  },
 	};
 	return std::visit(visitor, expr);
 }
@@ -151,8 +153,6 @@ ValueId IRGen::return_stmt(const AST::ReturnStmt& ret) {
 }
 
 ValueId IRGen::var_stmt(const AST::VariableStmt& var) {
-	// TOOD: is var global??
-	// then there will be no scope.
 	auto& syms = scopes.back().symbols;
 
 	if (syms.contains(var.name)) {
@@ -192,7 +192,6 @@ ValueId IRGen::if_expr(const AST::IfExpr& if_expr) {
 
 	push_inst(Opcode::Jump, NoValue, { l_done });
 	push_label(l_done);
-
 	return result;
 }
 
@@ -219,7 +218,7 @@ ValueId IRGen::while_expr(const AST::WhileExpr& while_expr) {
 ValueId IRGen::literal_expr(const AST::LiteralExpr& literal) {
 	ValueId value = new_value(literal.type);
 	push_inst(Opcode::Const, value);
-	constants[value] = parse_literal(literal);
+	literals[value] = parse_literal(literal);
 	return value;
 }
 
@@ -323,13 +322,9 @@ LabelId IRGen::new_label() {
 	return next_label_id++;
 }
 
-bool IRGen::is_constant(const ValueId value_id) {
-	return constants.contains(value_id);
+bool IRGen::is_literal(const ValueId value_id) {
+	return literals.contains(value_id);
 }
-
-void BasicBlockGenerator::module(const Module& mod) {
-}
-
 
 std::vector<BasicBlock> BasicBlockGenerator::function(const LinearFunction& fn) {
 	std::vector<BasicBlock> blocks;

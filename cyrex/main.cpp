@@ -1,6 +1,9 @@
 #include "parser.hpp"
+#include "semantics.hpp"
+
 #include "x64.hpp"
 #include "x64-optimizer.hpp"
+
 #include <iostream>
 #include <iomanip>
 #include <format>
@@ -34,12 +37,13 @@ static const map<string, Token::Type> punctuation =
 	// -- punctuation --
 	{"(", Token::Type::LeftParen},
 	{")", Token::Type::RightParen},
+	{"[", Token::Type::LeftSqBracket},
+	{"]", Token::Type::RightSqBracket},
 	{":", Token::Type::Colon},
 	{"{", Token::Type::LeftBrace},
 	{"}", Token::Type::RightBrace},
-	{"[", Token::Type::LeftSqBracket},
-	{"]", Token::Type::RightSqBracket},
 	{"=", Token::Type::Assign},
+	{",", Token::Type::Comma},
 	// logic
 	{"&", Token::Type::And},
 	{"|", Token::Type::Or},
@@ -112,7 +116,7 @@ void out(IRGen& irgen, const std::vector<Inst>& inst, std::ostream& os) {
 		os << opcode_name(ins.opcode);
 		// Special case: const  print literal value
 		if (ins.opcode == Opcode::Const) {
-			const auto& c = irgen.constants.at(ins.result);
+			const auto& c = irgen.literals.at(ins.result);
 			os << ' ';
 			std::visit([&](auto&& x) {
 				os << x;
@@ -171,6 +175,9 @@ int main() {
 			cout << format("error: {}", err) << '\n';
 		}
 	}
+
+	SemanticAnalyzer sa;
+	sa.analyze(root);
 
 	IRGen irgen;
 	irgen.gen(root);

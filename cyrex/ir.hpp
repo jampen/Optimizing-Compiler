@@ -1,7 +1,6 @@
 #pragma once
 #include "ast.hpp"
 #include <unordered_map>
-#include <list>
 
 using ValueId = int;
 using LabelId = ValueId;
@@ -9,6 +8,7 @@ using LabelId = ValueId;
 constexpr static ValueId NoValue = -1;
 
 struct Value {
+	// TODO: language independent type
 	AST::Type type;
 };
 

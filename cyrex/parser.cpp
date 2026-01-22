@@ -3,8 +3,8 @@
 #include <format>
 
 template<typename T>
-static AST::Ptr make_ast(T&& val) {
-	return AST::Ptr(new AST{ std::move(val) });
+static AST::Ptr make_ast(T&& val, Symbol sym = {}) {
+	return AST::Ptr(new AST{ .data = std::move(val), .sym = sym });
 }
 
 bool Parser::is_at_end() const {
@@ -111,7 +111,12 @@ AST::Ptr Parser::parse_stmt() {
 	if (check(Token::Type::Identifier)) {
 		return parse_identifier();
 	}
-	push_error(std::format("unexpected {}", current_token().text));
+	if (check(Token::Type::LeftSqBracket)) {
+		next();
+		return parse_tuple();
+	}
+
+	push_error(std::format("unexpected {} in statement", current_token().text));
 	return nullptr;
 }
 
@@ -147,7 +152,78 @@ AST::Ptr Parser::parse_expr() {
 		return parse_if(Context::Expression);
 	}
 
+	if (check(Token::Type::LeftSqBracket)) {
+		next();
+		return parse_tuple();
+	}
+
 	return nullptr;
+}
+
+AST::Ptr Parser::parse_tuple(const int size_limit) {
+	std::vector<AST::Ptr> exprs;
+
+	while (!check(Token::Type::RightSqBracket)) {
+		auto expr = parse_expr();
+
+		if (!expr) {
+			push_error("expected expression in tuple");
+			return nullptr;
+		}
+		exprs.push_back(std::move(expr));
+		if (check(Token::Type::RightSqBracket)) break;
+
+		if (!expect(Token::Type::Comma, "expected comma after expression")) {
+			return nullptr;
+		}
+		next();
+	}
+
+	if (!expect(Token::Type::RightSqBracket, "expected ] to close tuple")) {
+		return nullptr;
+	}
+	next();
+
+	if (exprs.empty()) {
+		push_error("tuple cannot be empty");
+		return nullptr;
+	}
+
+	if (size_limit != -1 && exprs.size() != size_limit) {
+		push_error(std::format("tuple must have exactly {} terms", size_limit));
+		return nullptr;
+	}
+
+	size_t nexprs = exprs.size();
+
+	auto tuple = make_ast(AST::TupleExpr{ .exprs = std::move(exprs) });
+
+	// [a,b] = [b,a]
+	if (check(Token::Type::Assign)) {
+		next();
+		if (!expect(Token::Type::LeftSqBracket, "expected [ for tuple")) {
+			return nullptr;
+		}
+		next();
+
+		auto rhs = parse_tuple(nexprs);
+
+		if (rhs == nullptr) {
+			push_error("expected tuple for tuple assignment");
+			return nullptr;
+		}
+
+		return make_ast(AST::TupleAssignExpr{
+			.tup_left = std::move(tuple),
+			.tup_right = std::move(rhs) });
+	}
+
+	if (tuple == nullptr) {
+
+	}
+
+	return tuple;
+
 }
 
 AST::Ptr Parser::parse_if(Context context) {
@@ -224,7 +300,7 @@ AST::Ptr Parser::parse_while(Context context) {
 		if (check(Token::Type::Then)) {
 			next();
 			auto expr = parse_expr();
-			if (!expr)  return nullptr;
+			if (!expr) return nullptr;
 			// while condition {...} then expr
 			return make_ast(AST::WhileExpr{
 				.condition = std::move(condition),
@@ -364,24 +440,29 @@ AST::Ptr Parser::parse_parameters() {
 
 AST::Ptr Parser::parse_variable(Context context) {
 	AST::VariableStmt variable{};
+	bool is_const = false;
 
 	// read constness
 	switch (next().type) {
 		case Token::Type::Var:
-		variable.is_const = false;
+		is_const = false;
 		break;
 		case Token::Type::Const:
-		variable.is_const = true;
+		is_const = true;
 		break;
 		default:
 		push_error("expected either const or var");
 		return nullptr;
 	}
+	variable.is_const = is_const;
+	
 	// read name
 	if (!expect(Token::Type::Identifier, "expected variable name")) {
 		return nullptr;
 	}
-	variable.name = next().text;
+	const std::string name = next().text;
+	variable.name = name;
+	
 	// read type
 	if (!expect(Token::Type::Colon, "expected : after variable name")) {
 		return nullptr;
@@ -407,11 +488,12 @@ AST::Ptr Parser::parse_variable(Context context) {
 		variable.initializer = std::move(expr);
 	}
 
-	return make_ast(std::move(variable));
+	return make_ast(std::move(variable), {.name = name, .is_assignable = !is_const});
 }
 
 AST::Ptr Parser::parse_identifier() {
-	auto ident = make_ast(AST::IdentifierExpr{ .name = next().text });
+	auto name = next().text;
+	auto ident = make_ast(AST::IdentifierExpr{ .name = name }, {.name = name });
 
 	if (check_binary()) {
 		return parse_binary(std::move(ident));

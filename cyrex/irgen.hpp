@@ -3,7 +3,6 @@
 #include <optional>
 
 struct BasicBlockGenerator {
-	void module(const Module& mod);
 	std::vector<BasicBlock> function(const LinearFunction& fn);
 	void link_blocks(std::vector<BasicBlock>& blocks, const LinearFunction& fn);
 	const std::vector<BasicBlock>& get_fn_bbs(const std::string& function_name) const;
@@ -61,12 +60,13 @@ struct IRGen {
 
 	LabelId new_label();
 
-	bool is_constant(const ValueId value_id);
+	bool is_literal(const ValueId value_id);
 
 	std::vector<std::string> errors;
 	std::vector<Value> values;
-	std::unordered_map<ValueId, Constant> constants;
+	std::unordered_map<ValueId, Constant> literals;
 	std::unordered_map<std::string, LinearFunction> functions;
+
 	std::vector<Scope> scopes;
 	LabelId next_label_id{};
 	Module mod;

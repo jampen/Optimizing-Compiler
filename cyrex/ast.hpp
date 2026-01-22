@@ -1,9 +1,14 @@
-
 #pragma once
 #include <string>
 #include <memory>
 #include <variant>
 #include <vector>
+#include <optional>
+
+struct Symbol {
+	std::optional<std::string> name;
+	bool is_assignable{};
+};
 
 struct AST {
 	using Name = std::string;
@@ -36,13 +41,6 @@ struct AST {
 		// paramater list
 		Ptr parameter_list{};
 		Ptr block{};
-	};
-
-	struct VariableStmt {
-		bool is_const{};
-		Name name{};
-		Type type{};
-		Ptr initializer{};
 	};
 
 	struct ParameterList {
@@ -82,30 +80,10 @@ struct AST {
 		std::string value;
 	};
 
-	// - statements --
-	struct BlockStmt {
-		std::vector<Ptr> statements;
-	};
-
-	struct ReturnStmt {
-		Ptr expr;
-	};
-
-	struct WhileStmt {
-		Ptr condition;
-		Ptr block;
-	};
-
 	struct WhileExpr {
 		Ptr condition;
 		Ptr block;
 		Ptr returns;
-	};
-
-	struct IfStmt {
-		Ptr condition;
-		Ptr then_stmt;
-		Ptr else_stmt;
 	};
 
 	struct IfExpr {
@@ -119,9 +97,62 @@ struct AST {
 		Ptr expr;
 	};
 
+	struct TupleExpr {
+		std::vector<Ptr> exprs;
+	};
+
+	struct TupleAssignExpr {
+		Ptr tup_left;
+		Ptr tup_right;
+	};
+
+	// - statements --
+	struct BlockStmt {
+		std::vector<Ptr> statements;
+	};
+
+	struct ReturnStmt {
+		Ptr expr;
+	};
+	
+	struct VariableStmt {
+		bool is_const{};
+		Name name{};
+		Type type{};
+		Ptr initializer{};
+	};
+
+	struct WhileStmt {
+		Ptr condition;
+		Ptr block;
+	};
+
+	struct IfStmt {
+		Ptr condition;
+		Ptr then_stmt;
+		Ptr else_stmt;
+	};
+
 	using Top = std::variant<Function, Root, ParameterList>;
-	using Expr = std::variant<BinaryExpr, IdentifierExpr, LiteralExpr, AssignExpr, WhileExpr, IfExpr>;
-	using Stmt = std::variant<BlockStmt, ReturnStmt, VariableStmt, WhileStmt, IfStmt>;
+	
+	using Expr = std::variant<
+		BinaryExpr,
+		IdentifierExpr,
+		LiteralExpr,
+		AssignExpr,
+		WhileExpr,
+		IfExpr,
+		TupleExpr,
+		TupleAssignExpr
+	>;
+
+	using Stmt = std::variant<
+		BlockStmt,
+		ReturnStmt,
+		VariableStmt,
+		WhileStmt,
+		IfStmt>;
 
 	std::variant<Top, Expr, Stmt> data;
+	Symbol sym{};
 };

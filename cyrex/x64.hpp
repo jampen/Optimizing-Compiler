@@ -1,6 +1,5 @@
 #pragma once
 #include "irgen.hpp"
-#include "is_optimizer.hpp"
 
 #include <sstream>
 #include <array>
