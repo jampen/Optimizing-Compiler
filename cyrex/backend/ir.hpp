@@ -1,5 +1,6 @@
 #pragma once
-#include "ast.hpp"
+// TODO: separate AST from IR
+#include "frontend/ast.hpp"
 #include <unordered_map>
 
 using ValueId = int;

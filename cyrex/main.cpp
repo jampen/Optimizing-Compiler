@@ -1,8 +1,8 @@
-#include "parser.hpp"
-#include "semantics.hpp"
+#include "frontend/parser.hpp"
+#include "frontend/semantics.hpp"
 
-#include "x64.hpp"
-#include "x64-optimizer.hpp"
+#include "backend/x64.hpp"
+#include "backend/x64-optimizer.hpp"
 
 #include <iostream>
 #include <iomanip>

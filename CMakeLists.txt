@@ -10,15 +10,18 @@ project ("cyrex-compiler")
 
 # Add source to this project's executable.
 add_executable (cyrex-compiler
-	cyrex/token.cpp
-	cyrex/parser.cpp
-	cyrex/irgen.cpp
-	cyrex/semantics.cpp
-	cyrex/x64-allocator.cpp
-	cyrex/x64-optimizer.cpp
-	cyrex/x64.cpp
-	cyrex/main.cpp
+	"cyrex/frontend/token.cpp"
+	"cyrex/frontend/parser.cpp"
+	"cyrex/backend/irgen.cpp"
+	"cyrex/frontend/semantics.cpp"
+	"cyrex/backend/x64-allocator.cpp"
+	"cyrex/backend/x64-optimizer.cpp"
+	"cyrex/backend/x64.cpp"
+	"cyrex/main.cpp"
 )
+
+include_directories(cyrex-compiler PRIVATE cyrex/)
+
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET cyrex-compiler PROPERTY CXX_STANDARD 20)
