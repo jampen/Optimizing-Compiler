@@ -3,7 +3,7 @@
 #include <format>
 
 template<typename T>
-static AST::Ptr make_ast(T&& val, Symbol sym = {}) {
+static AST::Ptr make_ast(T&& val, std::optional<AST::Symbol> sym = std::nullopt) {
 	return AST::Ptr(new AST{ .data = std::move(val), .sym = sym });
 }
 
@@ -504,12 +504,12 @@ AST::Ptr Parser::parse_variable(Context context) {
 		variable.initializer = std::move(expr);
 	}
 
-	return make_ast(std::move(variable), { .name = name, .is_assignable = !is_const });
+	return make_ast(std::move(variable), AST::Symbol{ .name = name, .is_assignable = !is_const });
 }
 
 AST::Ptr Parser::parse_identifier() {
 	auto name = next().text;
-	auto ident = make_ast(AST::IdentifierExpr{ .name = name }, { .name = name });
+	auto ident = make_ast(AST::IdentifierExpr{ .name = name }, AST::Symbol{ .name = name });
 
 	if (check_binary()) {
 		return parse_binary(std::move(ident));

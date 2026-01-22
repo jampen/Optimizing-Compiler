@@ -7,7 +7,7 @@
 class SemanticAnalyzer {
 private:
 	struct Scope {
-		std::unordered_map<std::string, Symbol> syms;
+		std::unordered_map<std::string, AST::Symbol> syms;
 	};
 public:
 	void analyze(AST::Ptr& ast);

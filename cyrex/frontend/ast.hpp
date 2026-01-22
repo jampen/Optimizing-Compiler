@@ -5,18 +5,14 @@
 #include <vector>
 #include <optional>
 
-struct Symbol {
-	std::optional<std::string> name;
-	bool is_assignable{};
-};
-
 struct AST {
 	using Name = std::string;
-
-#if 0
-	/// Hey Lois, I'm an AST! Nyeh heh heh heh
-#endif
 	using Ptr = std::unique_ptr<AST>;
+
+	struct Symbol {
+		Name name;
+		bool is_assignable{};
+	};
 
 	struct Type {
 		struct Qualifier {
@@ -153,5 +149,5 @@ struct AST {
 		IfStmt>;
 
 	std::variant<Top, Expr, Stmt> data;
-	Symbol sym{};
+	std::optional<Symbol> sym;
 };
