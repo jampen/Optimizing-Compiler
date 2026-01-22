@@ -1,9 +1,6 @@
 #include "semantics.hpp"
 #include <stdexcept>
 
-// This is not working because of a bad pointer access
-// Making lookup_sym return nullptr half-fixes it.
-
 void SemanticAnalyzer::analyze(AST::Ptr& ast) {
 	if (ast == nullptr) return;
 

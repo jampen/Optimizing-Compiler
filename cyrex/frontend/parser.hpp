@@ -29,28 +29,31 @@ private:
 	bool expect(const Token::Type type, const std::string& error_message);
 	bool expect_data_type(const std::string& error_message);
 	Token next();
-
 	void push_error(const std::string& error_message);
 
+private:
 	AST::Ptr parse_top();
 	AST::Ptr parse_stmt();
 	AST::Ptr parse_expr();
 
+private:
 	AST::Ptr parse_tuple(int size_limit = -1);
 	AST::Ptr parse_if(Context context);
 	AST::Ptr parse_while(Context context);
 	AST::Ptr parse_return();
 
-
+private:
 	AST::Ptr parse_function();
 	AST::Ptr parse_block();
 	AST::Ptr parse_parameters();
 	AST::Ptr parse_variable(Context context);
 
+private:
 	AST::Ptr parse_identifier();
 	AST::Ptr parse_number();
 	AST::Ptr parse_binary(AST::Ptr&& left);
 
+private:
 	AST::Type parse_type();
 
 private:
