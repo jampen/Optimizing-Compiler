@@ -114,7 +114,7 @@ struct AST {
 	struct ReturnStmt {
 		Ptr expr;
 	};
-	
+
 	struct VariableStmt {
 		bool is_const{};
 		Name name{};
@@ -134,7 +134,7 @@ struct AST {
 	};
 
 	using Top = std::variant<Function, Root, ParameterList>;
-	
+
 	using Expr = std::variant<
 		BinaryExpr,
 		IdentifierExpr,
@@ -143,8 +143,7 @@ struct AST {
 		WhileExpr,
 		IfExpr,
 		TupleExpr,
-		TupleAssignExpr
-	>;
+		TupleAssignExpr>;
 
 	using Stmt = std::variant<
 		BlockStmt,

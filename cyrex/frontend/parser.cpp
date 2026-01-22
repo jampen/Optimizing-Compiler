@@ -7,6 +7,10 @@ static AST::Ptr make_ast(T&& val, Symbol sym = {}) {
 	return AST::Ptr(new AST{ .data = std::move(val), .sym = sym });
 }
 
+
+constexpr Parser::Error::Error(const std::string& message) : message(message) {
+}
+
 bool Parser::is_at_end() const {
 	return index >= tokens.size();
 }
@@ -68,7 +72,11 @@ void Parser::push_error(const std::string& error_message) {
 	errors.emplace_back(error_message);
 }
 
-AST::Ptr Parser::parse() {
+AST::Ptr Parser::parse(const std::vector<Token>& tokens) {
+	this->tokens = tokens;
+	this->errors.clear();
+	this->errors.shrink_to_fit();
+	this->index = 0;
 	auto root = AST::Root{};
 
 	while (!is_at_end()) {
@@ -78,6 +86,14 @@ AST::Ptr Parser::parse() {
 	}
 
 	return make_ast(root);
+}
+
+bool Parser::has_errors() const {
+	return !errors.empty();
+}
+
+const std::vector<Parser::Error>& Parser::get_errors() const {
+	return errors;
 }
 
 AST::Ptr Parser::parse_top() {
@@ -455,14 +471,14 @@ AST::Ptr Parser::parse_variable(Context context) {
 		return nullptr;
 	}
 	variable.is_const = is_const;
-	
+
 	// read name
 	if (!expect(Token::Type::Identifier, "expected variable name")) {
 		return nullptr;
 	}
 	const std::string name = next().text;
 	variable.name = name;
-	
+
 	// read type
 	if (!expect(Token::Type::Colon, "expected : after variable name")) {
 		return nullptr;
@@ -488,12 +504,12 @@ AST::Ptr Parser::parse_variable(Context context) {
 		variable.initializer = std::move(expr);
 	}
 
-	return make_ast(std::move(variable), {.name = name, .is_assignable = !is_const});
+	return make_ast(std::move(variable), { .name = name, .is_assignable = !is_const });
 }
 
 AST::Ptr Parser::parse_identifier() {
 	auto name = next().text;
-	auto ident = make_ast(AST::IdentifierExpr{ .name = name }, {.name = name });
+	auto ident = make_ast(AST::IdentifierExpr{ .name = name }, { .name = name });
 
 	if (check_binary()) {
 		return parse_binary(std::move(ident));

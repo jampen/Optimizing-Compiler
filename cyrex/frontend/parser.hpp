@@ -3,18 +3,25 @@
 #include "ast.hpp"
 #include <span>
 
-struct Parser {
+class Parser {
+private:
 	enum class Context {
 		TopLevel,
 		ParameterList,
 		Statement,
 		Expression
 	};
-	
-	std::vector<Token> tokens;
-	size_t index{};
-	std::vector<std::string> errors;
-	
+public:
+	struct Error {
+		constexpr explicit Error(const std::string& message);
+		std::string message;
+	};
+
+	AST::Ptr parse(const std::vector<Token>& tokens);
+	bool has_errors() const;
+	const std::vector<Error>& get_errors() const;
+
+private:
 	bool is_at_end() const;
 	const Token& current_token() const;
 	bool check(const Token::Type type) const;
@@ -25,11 +32,10 @@ struct Parser {
 
 	void push_error(const std::string& error_message);
 
-	AST::Ptr parse();
 	AST::Ptr parse_top();
 	AST::Ptr parse_stmt();
 	AST::Ptr parse_expr();
-	
+
 	AST::Ptr parse_tuple(int size_limit = -1);
 	AST::Ptr parse_if(Context context);
 	AST::Ptr parse_while(Context context);
@@ -46,4 +52,9 @@ struct Parser {
 	AST::Ptr parse_binary(AST::Ptr&& left);
 
 	AST::Type parse_type();
+
+private:
+	std::vector<Token> tokens;
+	size_t index{};
+	std::vector<Error> errors;
 };

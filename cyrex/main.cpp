@@ -158,21 +158,23 @@ static void bbg_out(IRGen& irgen,std::ostream& os) {
 	}
 }
 
-static Parser load(const string& filename) {
+static std::string read_file(const string& filename) {
 	string src;
 	ifstream in(filename);
 	getline(in, src, '\0');
-	Parser parser{ tokenize(src, keywords, punctuation) };
-	return parser;
+	return src;
+
+
 }
 
 int main() {
-	Parser parser = load("prog.in");
-	auto root = parser.parse();
+	std::string file = read_file("prog.in");
+	Parser parser;
+	auto root = parser.parse(tokenize(file, keywords, punctuation));
 
-	if (parser.errors.size()) {
-		for (const auto& err : parser.errors) {
-			cout << format("error: {}", err) << '\n';
+	if (parser.has_errors()) {
+		for (const auto& err : parser.get_errors()) {
+			cout << format("error: {}", err.message) << '\n';
 		}
 	}
 
@@ -198,6 +200,5 @@ int main() {
 
 	ofstream iroutf("prog.ir");
 	bbg_out(irgen, iroutf);
-
 	return 0;
 }
