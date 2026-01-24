@@ -35,7 +35,7 @@ const static std::unordered_map<Opcode, AllocationStrategy> alloc_strategy = {
 	{Opcode::Const,				{"sn"}},
 	{Opcode::Store,				{"xnn"}},
 	{Opcode::Load,				{"tn"}},
-	{Opcode::Add,				{"tnn"}},	
+	{Opcode::Add,				{"tnn"}},
 	{Opcode::Sub,				{"tnn"}},
 	{Opcode::Lesser,			{"tnn"}},
 	{Opcode::LesserOrEqual,		{"tnn"}},
@@ -52,10 +52,13 @@ const static std::unordered_map<Opcode, AllocationStrategy> alloc_strategy = {
 	{Opcode::Return,			{"xn"}},
 };
 
+X64::X64(IRGen& ir, X64Optimizer& optimizer) : ir(ir), optimizer(optimizer) {}
+
 void X64::module() {
 	function_textstream << "bits 64\n";
 	function_textstream << "section .text\n";
-	for (const auto& [fn_name, fn] : ir.mod.functions) {
+
+	for (const auto& [fn_name, fn] : ir.get_functions()) {
 		function_textstream << "global " << fn_name << '\n';
 		function(fn_name, fn);
 	}
@@ -68,9 +71,8 @@ void X64::function(const std::string& name, const CFGFunction& fn) {
 
 	function_mc = {};
 	function_mc.epi_lbl = fn.blocks.back().lbl_entry;
-	
-	// generate machine code
 
+	// generate machine code
 	for (const auto& bb : fn.blocks) {
 		for (const auto& inst : bb.inst) {
 			instruction(function_mc.block, inst);
@@ -217,11 +219,21 @@ void X64::optimize(std::vector<MC>& mc) {
 	optimizer.remove_redundant_push_pop(mc);
 }
 
+std::string X64::assembly() {
+	std::string out;
+	std::string line;
+	while (std::getline(function_textstream, line, '\n')) {
+		out += line + '\n';
+	}
+	return out;
+}
+
 X64::Operand X64::operand(const ValueId value_id) {
 	if (locations.contains(value_id)) {
 		return location(value_id);
 	}
-	if (ir.literals.contains(value_id)) {
+
+	if (ir.literal_exists(value_id)) {
 		return constant(value_id);
 	}
 	throw std::runtime_error("internal error: use of unallocated value");
@@ -231,7 +243,7 @@ X64::Operand X64::constant(const ValueId constant_value_id) {
 	// It must be a constant
 	return std::visit([&](auto&& v) {
 		return Operand::make_imm((int64_t)v, constant_value_id);
-	}, ir.literals.at(constant_value_id).data);
+	}, ir.get_literal_by_id(constant_value_id).data);
 }
 
 
@@ -265,7 +277,7 @@ void X64::emit(std::ostream& ts, const std::vector<MC>& mc) {
 			// Mov
 			case Mov:
 			if (ins.dst->value_id != NoValue && ins.dst->is_mem()) {
-				ts << format("\tmov {} {}, {}\n", type_size(ir.values.at(ins.dst->value_id).type).str(), emit(*ins.dst), emit(*ins.src)); break;
+				ts << format("\tmov {} {}, {}\n", type_size(ir.get_value_by_id(ins.dst->value_id).type).str(), emit(*ins.dst), emit(*ins.src)); break;
 			} else {
 				ts << format("\tmov {}, {}\n", emit(*ins.dst), emit(*ins.src)); break;
 			}

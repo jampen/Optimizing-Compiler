@@ -13,7 +13,7 @@ struct Value {
 	AST::Type type;
 };
 
-struct Constant {
+struct Literal {
 	std::variant<long /*, double, std::string*/> data;
 };
 

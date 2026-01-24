@@ -7,20 +7,18 @@
 
 struct X64Optimizer;
 
-struct X64 {
-	IRGen& ir;
-	X64Optimizer& optimizer;
-
+class X64 {
+public:
 	enum class Reg {
 		rbp, rsp, rax, rbx, rcx, rdx, /*  */ r8, r9, r10, r11, r12, r13, r14, r15,
 		ebp, esp, eax, ebx, ecx, edx, /*  */ r8d, r9d, r10d, r11d, r12d, r13d, r14d, r15d,
 		bp, sp, ax, bx, cx, dx, /*      */ r8w, r9w, r10w, r11w, r12w, r13w, r14w, r15w,
 		bpl, spl, al, bl, cl, dl, /*      */ r8b, r9b, r10b, r11b, r12b, r13b, r14b, r15b,
 	};
+	
+	enum class RegSize { Qword = 0, Dword = 1, Word = 2, Byte = 3 };
 
 	constexpr static int num_qword_regs = 14;
-
-	enum class RegSize { Qword = 0, Dword = 1, Word = 2, Byte = 3 };
 
 	struct TypeSize {
 		RegSize elem_size{};
@@ -37,34 +35,29 @@ struct X64 {
 		}
 	};
 
-	const std::unordered_map<RegSize, std::array<Reg, num_qword_regs>> reg_by_size = {
-		{ RegSize::Qword, {	Reg::rbp, Reg::rsp, Reg::rax, Reg::rbx, Reg::rcx, Reg::rdx, Reg::r8, Reg::r9, Reg::r10, Reg::r11, Reg::r12, Reg::r13, Reg::r14, Reg::r15}},
-		{ RegSize::Dword, {	Reg::ebp, Reg::esp, Reg::eax, Reg::rbx, Reg::rcx, Reg::rdx, Reg::r8d, Reg::r9d, Reg::r10d, Reg::r11d, Reg::r12d, Reg::r13d, Reg::r14d, Reg::r15d}},
-		{ RegSize::Word, {	Reg::bp,  Reg::sp, Reg::ax, Reg::bx, Reg::cx, Reg::dx,  Reg::r8w, Reg::r9w, Reg::r10w, Reg::r11w, Reg::r12w, Reg::r13w, Reg::r14w, Reg::r15w}},
-		{ RegSize::Byte, {	Reg::bpl, Reg::spl, Reg::al, Reg::bl, Reg::cl, Reg::dl, Reg::r8b,  Reg::r9b, Reg::r10b, Reg::r11b, Reg::r12b, Reg::r13b, Reg::r14b, Reg::r15b}},
-	};
-
 	// System dependent!
 	constexpr static std::array volatile_regs = { Reg::rax, Reg::rcx, Reg::rdx, Reg::r8, Reg::r9, Reg::r10, Reg::r11 };
 	constexpr static std::array callee_saved_regs = { Reg::rbx, Reg::r12, Reg::r13, Reg::r14, Reg::r15 };
 
 	constexpr static Reg to_largest_reg(const Reg reg) {
+#define X(q,d,w,b) case Reg::q: case Reg::d: case Reg::w: case Reg::b: return Reg::q
 		switch (reg) {
-			case Reg::rbp: case Reg::ebp: case Reg::bp: case Reg::bpl: return Reg::rbp;
-			case Reg::rsp: case Reg::esp: case Reg::sp: case Reg::spl: return Reg::rsp;
-			case Reg::rax: case Reg::eax: case Reg::ax: case Reg::al: return Reg::rax;
-			case Reg::rbx: case Reg::ebx: case Reg::bx: case Reg::bl: return Reg::rbx;
-			case Reg::rcx: case Reg::ecx: case Reg::cx: case Reg::cl: return Reg::rcx;
-			case Reg::rdx: case Reg::edx: case Reg::dx: case Reg::dl: return Reg::rdx;
-			case Reg::r8:  case Reg::r8d:  case Reg::r8w:  case Reg::r8b: return Reg::r8;
-			case Reg::r9:  case Reg::r9d:  case Reg::r9w:  case Reg::r9b: return Reg::r9;
-			case Reg::r10: case Reg::r10d: case Reg::r10w: case Reg::r10b: return Reg::r10;
-			case Reg::r11: case Reg::r11d: case Reg::r11w: case Reg::r11b: return Reg::r11;
-			case Reg::r12: case Reg::r12d: case Reg::r12w: case Reg::r12b: return Reg::r12;
-			case Reg::r13: case Reg::r13d: case Reg::r13w: case Reg::r13b: return Reg::r13;
-			case Reg::r14: case Reg::r14d: case Reg::r14w: case Reg::r14b: return Reg::r14;
-			case Reg::r15: case Reg::r15d: case Reg::r15w: case Reg::r15b: return Reg::r15;
+			X(rbp, ebp, bp, bpl);
+			X(rsp, esp, sp, spl);
+			X(rax, eax, ax, al);
+			X(rbx, ebx, bx, bl);
+			X(rcx, ecx, cx, cl);
+			X(rdx, edx, dx, dl);
+			X(r8, r8d, r8w, r8b);
+			X(r9, r9d, r9w, r9b);
+			X(r10, r10d, r10w, r10b);
+			X(r11, r11d, r11w, r11b);
+			X(r12, r12d, r12w, r12b);
+			X(r13, r13d, r13w, r13b);
+			X(r14, r14d, r14w, r14b);
+			X(r15, r15d, r15w, r15b);
 		}
+#undef X
 	}
 
 	constexpr static bool is_reg_callee_saved(const Reg reg) {
@@ -102,6 +95,8 @@ struct X64 {
 		const int reg_as_int = (int)reg;
 		return (Reg)(reg_as_int + num_qword_regs * (int)size);
 	}
+
+	// TODO: Use semantic analysis!!!
 
 	enum class ValueLifetime {
 		Temporary,
@@ -433,14 +428,16 @@ struct X64 {
 		std::vector<MC> epilogue;
 	};
 
-	// Emission
+public:
+	explicit X64(IRGen& ir, X64Optimizer& optimizer);
 	void module();
+	void optimize(std::vector<MC>& mc);
+	std::string assembly();
+
+private:
 	void function(const std::string& name, const CFGFunction& fn);
 	void instruction(std::vector<MC>& mc, const Inst& inst);
-
-	// Optimization
-	void optimize(std::vector<MC>& mc);
-
+	
 	// Allocation
 	// implemented in x64-allocator.cpp
 	void consume(const ValueId value_id);
@@ -459,6 +456,9 @@ struct X64 {
 	// Assembly
 	std::string emit(const Operand& operand);
 	void emit(std::ostream& ts, const std::vector<MC>& mc);
+
+	IRGen& ir;
+	X64Optimizer& optimizer;
 
 	std::unordered_map<ValueId, ValueLocation> locations;
 	std::unordered_map<Reg, ValueId> claimed_regs;

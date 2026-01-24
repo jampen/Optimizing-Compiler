@@ -27,7 +27,7 @@ X64::TypeSize X64::type_size(const AST::Type& type) {
 }
 
 void X64::alloc_stack(const ValueId value_id, const ValueLifetime lifetime) {
-	auto& value = ir.values[value_id];
+	const auto& value = ir.get_value_by_id(value_id);
 	function_mc.stack_size += type_size(value.type).num_bytes;
 	locations[value_id] = {
 		.kind = ValueLocation::Kind::Stack,

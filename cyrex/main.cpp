@@ -11,6 +11,9 @@
 
 using namespace std;
 
+
+// TODO constexpr maps
+
 static const map<string, Token::Type> keywords =
 {
 	// -- keywords --
@@ -63,7 +66,7 @@ static const map<string, Token::Type> punctuation =
 	{"!=", Token::Type::NotEqual},
 };
 
-string tystr(const AST::Type& type) {
+static string tystr(const AST::Type& type) {
 	string s = type.name;
 
 	for (const auto& qual : type.qualifiers) {
@@ -84,41 +87,41 @@ string tystr(const AST::Type& type) {
 	return s;
 }
 
-static std::string v(ValueId id) {
-	return std::format("v{}", id);
+static string v(ValueId id) {
+	return format("v{}", id);
 }
 
 
-void out(IRGen& irgen, const std::vector<Inst>& inst, std::ostream& os) {
+static void out(IRGen& irgen, const vector<Inst>& inst, ostream& os) {
 	for (const auto& ins : inst) {
 		//os << "; ";
 		if (ins.opcode == Opcode::Label) {
-			os << std::format("L{}:", ins.operands[0]) << '\n';
+			os << format("L{}:", ins.operands[0]) << '\n';
 			continue;
 		}
 
 		if (ins.opcode == Opcode::Branch) {
-			os << std::format("b v{}, L{}, L{}", ins.operands[0], ins.operands[1], ins.operands[2]) << '\n';
+			os << format("b v{}, L{}, L{}", ins.operands[0], ins.operands[1], ins.operands[2]) << '\n';
 			continue;
 		}
 
 		if (ins.opcode == Opcode::Jump) {
-			os << std::format("j L{}", ins.operands[0]) << '\n';
+			os << format("j L{}", ins.operands[0]) << '\n';
 			continue;
 		}
 
 		// Result + type
 		if (ins.result >= 0) {
-			const auto& val = irgen.values.at(ins.result);
-			os << std::format("{} : {} = ", v(ins.result), tystr(val.type));
+			const auto& val = irgen.get_value_by_id(ins.result);
+			os << format("{} : {} = ", v(ins.result), tystr(val.type));
 		}
 		// Opcode
 		os << opcode_name(ins.opcode);
 		// Special case: const  print literal value
 		if (ins.opcode == Opcode::Const) {
-			const auto& c = irgen.literals.at(ins.result);
+			const auto& c = irgen.get_literal_by_id(ins.result);
 			os << ' ';
-			std::visit([&](auto&& x) {
+			visit([&](auto&& x) {
 				os << x;
 			}, c.data);
 		}
@@ -136,46 +139,35 @@ void out(IRGen& irgen, const std::vector<Inst>& inst, std::ostream& os) {
 	}
 }
 
-void out(IRGen& irgen, X64& x64, std::ostream& os, bool comments = false) {
-	//for (const auto& [func_name, func] : irgen.mod.functions) {
-	//	os << format("; func {}", func_name) << '\n';
-	//}
-	os << ";--------------\n";
-	string line;
-	while (getline(x64.function_textstream, line, '\n')) {
-		os << line << '\n';
-	}
-}
-
-
-static void bbg_out(IRGen& irgen,std::ostream& os) {
-	for (const auto& [fn_name, bbs] : irgen.bbg.fn_to_bbs) {
-		os << "func " << fn_name << '\n';
-		for (int i = 0; i < bbs.size(); ++i) {
-			os << std::format("BB{}:\n", i);
-			out(irgen, bbs.at(i).inst, os);
-		}
-	}
-}
-
-static std::string read_file(const string& filename) {
+static string read_file(const string& filename) {
+	ifstream infile(filename);
+	if (!infile) {
+		throw runtime_error(format("file not found: {}", filename));
+	} 
 	string src;
 	ifstream in(filename);
 	getline(in, src, '\0');
 	return src;
-
-
 }
 
 int main() {
-	std::string file = read_file("prog.in");
+	vector<Token> tokens;
+	try {
+		tokens = tokenize(read_file("prog.in"), keywords, punctuation);
+	}
+	catch (const runtime_error& rte) {
+		cerr << rte.what() << '\n';
+		return EXIT_FAILURE;
+	}
+
 	Parser parser;
-	auto root = parser.parse(tokenize(file, keywords, punctuation));
+	auto root = parser.parse(tokens);
 
 	if (parser.has_errors()) {
 		for (const auto& err : parser.get_errors()) {
 			cout << format("error: {}", err.message) << '\n';
 		}
+		return EXIT_FAILURE;
 	}
 
 	SemanticAnalyzer sa;
@@ -184,21 +176,18 @@ int main() {
 	IRGen irgen;
 	irgen.gen(root);
 
-	if (irgen.errors.size()) {
-		for (const auto& err : irgen.errors) {
+	if (irgen.has_errors()) {
+		for (const auto& err : irgen.get_errors()) {
 			cout << format("error: {}", err) << '\n';
 		}
+		return EXIT_FAILURE;
 	}
 	
 	ofstream outf("prog.S");
-	X64Optimizer optimizer{ irgen };
+	X64Optimizer optimizer{ irgen };	
 
-	X64 x64{ irgen, optimizer };
+	X64 x64 (irgen, optimizer);
 	x64.module();
-	out(irgen, x64, outf, true);
-
-
-	ofstream iroutf("prog.ir");
-	bbg_out(irgen, iroutf);
+	outf << x64.assembly();
 	return 0;
 }

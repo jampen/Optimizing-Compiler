@@ -265,7 +265,7 @@ bool X64Optimizer::pass_peephole(std::vector<MC>& mc) {
 
 			if (a.op == Xor &&
 				*a.src == *a.dst &&
-				ir.is_literal(a.src->value_id) &&
+				ir.literal_exists(a.src->value_id) &&
 				b.op == Cmp &&
 				b.lhs->is_reg() && b.rhs == a.src) {
 				MC fold = MC::cmp(*b.lhs, Operand::make_imm(0));

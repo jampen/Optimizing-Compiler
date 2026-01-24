@@ -15,6 +15,22 @@ ValueId IRGen::gen(const AST::Ptr& ptr) {
 	return std::visit(visitor, ptr->data);
 }
 
+const Value& IRGen::get_value_by_id(const ValueId value_id) const {
+	return values.at(value_id);
+}
+
+const Literal& IRGen::get_literal_by_id(const ValueId value_id) const {
+	return literals.at(value_id);
+}
+
+const CFGFunction& IRGen::get_function_by_name(const std::string& name) const {
+	return mod.functions.at(name);
+}
+
+bool IRGen::literal_exists(const ValueId value_id) const {
+	return literals.contains(value_id);
+}
+
 ValueId IRGen::top(const AST::Top& top) {
 	auto visitor = overloaded{
 		[&](const AST::Root& x) { return root(x); },
@@ -261,7 +277,7 @@ ValueId IRGen::assign_expr(const AST::AssignExpr& assign) {
 	return leftval;
 }
 
-Constant IRGen::parse_literal(const AST::LiteralExpr literal) {
+Literal IRGen::parse_literal(const AST::LiteralExpr literal) {
 	if (literal.type.name == "int") {
 		return { std::stol(literal.value) };
 	}
@@ -320,10 +336,6 @@ void IRGen::exit_scope() {
 
 LabelId IRGen::new_label() {
 	return next_label_id++;
-}
-
-bool IRGen::is_literal(const ValueId value_id) {
-	return literals.contains(value_id);
 }
 
 std::vector<BasicBlock> BasicBlockGenerator::function(const LinearFunction& fn) {
