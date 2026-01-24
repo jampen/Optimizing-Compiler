@@ -54,6 +54,7 @@ const static std::unordered_map<Opcode, AllocationStrategy> alloc_strategy = {
 
 X64::X64(IRGen& ir, X64Optimizer& optimizer) : ir(ir), optimizer(optimizer) {}
 
+
 void X64::module() {
 	function_textstream << "bits 64\n";
 	function_textstream << "section .text\n";

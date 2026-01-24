@@ -9,6 +9,8 @@
 #include <format>
 #include <fstream>
 
+#include <argparse/argparse.hpp>
+
 using namespace std;
 
 
@@ -175,45 +177,84 @@ static void write_assembly(const string& filename, const X64& x64) {
 	outfile << x64.assembly() << '\n';
 }
 
-int main() {
-	vector<Token> tokens;
+int main(int argc, const char* argv[]) {
+	// prepare arguments
+	argparse::ArgumentParser program("cyrexc");
+	program.add_argument("input_files")
+		.help("a list of files to compile")
+		.nargs(1, std::numeric_limits<size_t>::max())
+		.required();
+
+	program.add_argument("--ir")
+		.help("output immediate representation")
+		.default_value(false)
+		.implicit_value(true);
+
+	program.add_argument("--optimized")
+		.help("compile with optimization")
+		.default_value(false)
+		.implicit_value(true);
+
 	try {
-		tokens = tokenize(read_file("hello.cyrex"), keywords, punctuation);
-	} catch (const runtime_error& rte) {
-		cerr << rte.what() << '\n';
-		return EXIT_FAILURE;
-	}	
-
-	Parser parser;
-	auto root = parser.parse(tokens);
-
-	if (parser.has_errors()) {
-		for (const auto& err : parser.get_errors()) {
-			cout << format("error: {}", err.message) << '\n';
-		}
+		program.parse_args(argc, argv);
+	} catch (const exception& err) {
+		cerr << "fatal: " << err.what() << '\n';
+		cerr << program << '\n';
 		return EXIT_FAILURE;
 	}
 
-	SemanticAnalyzer sa;
-	sa.analyze(root);
+	const bool output_ir = program.get<bool>("--ir");
+	const bool is_optimized = program.get<bool>("--optimized");
+	const auto files = program.get<std::vector<std::string>>("input_files");
 
-	IRGen irgen;
-	irgen.gen(root);
-
-	if (irgen.has_errors()) {
-		for (const auto& err : irgen.get_errors()) {
-			cout << format("error: {}", err) << '\n';
+	for (const auto& filename : files) {
+		if (!filename.ends_with(".cyrex")) {
+			throw runtime_error(format("source file {} must end in .cyrex", filename));
 		}
-		return EXIT_FAILURE;
+
+		vector<Token> tokens;
+		try {
+			tokens = tokenize(read_file(filename), keywords, punctuation);
+		} catch (const runtime_error& rte) {
+			cerr << rte.what() << '\n';
+			return EXIT_FAILURE;
+		}
+
+		Parser parser;
+		auto root = parser.parse(tokens);
+
+		if (parser.has_errors()) {
+			for (const auto& err : parser.get_errors()) {
+				cout << format("error: {}", err.message) << '\n';
+			}
+			return EXIT_FAILURE;
+		}
+
+		SemanticAnalyzer sa;
+		sa.analyze(root);
+
+		IRGen irgen;
+		irgen.gen(root);
+
+		if (irgen.has_errors()) {
+			for (const auto& err : irgen.get_errors()) {
+				cout << format("error: {}", err) << '\n';
+			}
+			return EXIT_FAILURE;
+		}
+
+		string assembly_filename = filename.substr(0, filename.size() - 6) + ".asm";
+		string ir_filename = filename.substr(0, filename.size() - 6) + ".ir";
+
+		X64Optimizer optimizer{ irgen };
+		optimizer.is_enabled = is_optimized;
+
+		X64 x64(irgen, optimizer);
+		x64.module();
+
+		write_assembly(assembly_filename, x64);
+		if (output_ir) write_ir(ir_filename, irgen);
 	}
 
-	ofstream outf("hello.S");
-	X64Optimizer optimizer{ irgen };
-
-	X64 x64(irgen, optimizer);
-	x64.module();
-
-	write_ir("hello.ir", irgen);
-	write_assembly("hello.S", x64);
 	return 0;
 }

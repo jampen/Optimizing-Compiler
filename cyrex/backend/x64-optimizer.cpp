@@ -53,6 +53,7 @@ constexpr static bool compile_time_binary_compare(auto l, auto r, CompileTimeCom
 
 
 bool X64Optimizer::pass(std::vector<MC>& mc) {
+	if (!is_enabled) return false;
 	return (pass_peephole(mc) || pass_unused_labels(mc));
 }
 

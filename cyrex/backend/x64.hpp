@@ -9,6 +9,7 @@ struct X64Optimizer;
 
 class X64 {
 public:
+
 	enum class Reg {
 		rbp, rsp, rax, rbx, rcx, rdx, /*  */ r8, r9, r10, r11, r12, r13, r14, r15,
 		ebp, esp, eax, ebx, ecx, edx, /*  */ r8d, r9d, r10d, r11d, r12d, r13d, r14d, r15d,
