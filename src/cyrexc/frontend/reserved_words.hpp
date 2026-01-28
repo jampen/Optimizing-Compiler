@@ -11,7 +11,7 @@
 namespace cyrex
 {
 
-constexpr auto makeReservedWords()
+constexpr auto make_reserved_words()
 {
     using namespace std::string_view_literals;
     using enum Token::Kind;
@@ -35,10 +35,10 @@ constexpr auto makeReservedWords()
                                        std::pair{"u16"sv, U16},
                                        std::pair{"u32"sv, U32},
                                        std::pair{"u64"sv, U64}};
-    return util::CompileTimeMap{values};
+    return util::CompileTimeMap(values).sorted();
 }
 
-constexpr auto makeReservedPunctuation()
+constexpr auto make_reserved_punctuation()
 {
     using namespace std::string_view_literals;
     using enum Token::Kind;
@@ -76,7 +76,7 @@ constexpr auto makeReservedPunctuation()
         std::pair{"!="sv, NotEqualTo},
     };
 
-    return util::CompileTimeMap{values};
+    return util::CompileTimeMap(values).sorted();
 }
 
 } // namespace cyrex

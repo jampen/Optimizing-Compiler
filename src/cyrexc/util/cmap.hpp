@@ -60,6 +60,13 @@ struct CompileTimeMap
     {
         return data.end();
     }
+
+    [[nodiscard]] constexpr CompileTimeMap sorted() const
+    {
+        auto sorted_data = data;
+        std::sort(std::begin(sorted_data), std::end(sorted_data));
+        return {sorted_data};
+    }
 };
 
 } // namespace cyrex::util

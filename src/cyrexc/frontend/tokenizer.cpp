@@ -5,109 +5,105 @@
 
 namespace
 {
-constexpr auto reservedWords = cyrex::makeReservedWords();
-constexpr auto reservedPunctuation = cyrex::makeReservedPunctuation();
+constexpr auto reserved_words = cyrex::make_reserved_words();
+constexpr auto reserved_punctuation = cyrex::make_reserved_punctuation();
 
 } // namespace
 
-std::vector<cyrex::Token> cyrex::tokenize(const std::string& sourceCode)
+std::vector<cyrex::Token> cyrex::tokenize(const std::string& source_code)
 {
     std::vector<Token> tokens;
 
-    // TODO:
-    std::size_t line{1};
-    std::size_t column{1};
+    auto start = source_code.begin();
 
-    auto start = sourceCode.begin();
-
-    while (start != sourceCode.end())
+    while (start != source_code.end())
     {
-        const auto isDigit = [](const unsigned char ch)
+        const auto is_digit = [](const unsigned char ch)
         {
             return isdigit(ch);
         };
-        const auto isIdentifierBeginning = [](const unsigned char ch)
+        const auto is_identifier_beginning = [](const unsigned char ch)
         {
             return isalpha(ch) || ch == '_';
         };
-        const auto isIdentifierEnding = [isIdentifierBeginning, isDigit](const unsigned char ch)
+        const auto is_identifier_ending = [is_identifier_beginning, is_digit](const unsigned char ch)
         {
-            return isIdentifierBeginning(ch) || isdigit(ch);
+            return is_identifier_beginning(ch) || isdigit(ch);
         };
 
-        const auto isSpace = [](const unsigned char ch)
+        const auto is_space = [](const unsigned char ch)
         {
             return isspace(ch);
         };
-        const auto isPunct = [](const unsigned char ch)
+        const auto is_punct = [](const unsigned char ch)
         {
             return ispunct(ch);
         };
-        const auto isSpeechMark = [](const unsigned char ch)
+        const auto is_speech_mark = [](const unsigned char ch)
         {
             return ch == '\"';
         };
-        const auto findOrDefault = [](const auto& map, const auto& key, const auto& orElse)
+        const auto find_or_default = [](const auto& map, const auto& key, const auto& or_else)
         {
             const auto it = map.find(key);
             if (it != map.end())
             {
                 return it->second;
             }
-            return orElse;
+            return or_else;
         };
 
         // skip whitespace
-        start = std::find_if_not(start, sourceCode.end(), isSpace);
-        if (start == sourceCode.end())
+        start = std::find_if_not(start, source_code.end(), is_space);
+        if (start == source_code.end())
             break;
 
         // scan numbers
-        if (isDigit(*start))
+        if (is_digit(*start))
         {
-            auto end = std::find_if_not(start, sourceCode.end(), isDigit);
+            const auto end = std::find_if_not(start, source_code.end(), is_digit);
             tokens.emplace_back(Token::Kind::LiteralInteger, std::string{start, end});
             start = end;
             continue;
         }
 
         // scan a word
-        if (isIdentifierBeginning(*start))
+        if (is_identifier_beginning(*start))
         {
-            const auto end = std::find_if_not(start, sourceCode.end(), isIdentifierEnding);
+            const auto end = std::find_if_not(start, source_code.end(), is_identifier_ending);
             const auto word = std::string{start, end};
-            const auto kind = findOrDefault(reservedWords, word, Token::Kind::Identifier);
+            const auto kind = find_or_default(reserved_words, word, Token::Kind::Identifier);
             auto& tok = tokens.emplace_back(kind, std::string{start, end});
             // may be a keyword
             start = end;
             continue;
         }
 
-        if (isSpeechMark(*start))
+        if (is_speech_mark(*start))
         {
             start = std::next(start);
-            const auto end = std::find_if(start, sourceCode.end(), isSpeechMark);
-            if (end == sourceCode.end())
+            const auto end = std::find_if(start, source_code.end(), is_speech_mark);
+            if (end == source_code.end())
             {
-                throw LexicalError("Unterminated string", line, column);
+                throw LexicalError("Unterminated string");
             }
             tokens.emplace_back(Token::Kind::LiteralString, std::string{start, end});
             start = std::next(end);
             continue;
         }
 
-        if (isPunct(*start))
+        if (is_punct(*start))
         {
             std::string bestMatch;
-            for (auto len = 1; len <= sourceCode.end() - start; ++len)
+            for (auto len = 1; len <= source_code.end() - start; ++len)
             {
                 const std::string candidate(start, start + len);
-                if (reservedPunctuation.find(candidate) != reservedPunctuation.data.end())
+                if (reserved_punctuation.find(candidate) != reserved_punctuation.data.end())
                     bestMatch = candidate;
             }
             if (bestMatch.empty())
                 goto unexpected; // NOLINT(*-avoid-goto)
-            tokens.emplace_back(reservedPunctuation.at(bestMatch), bestMatch);
+            tokens.emplace_back(reserved_punctuation.at(bestMatch), bestMatch);
             start += bestMatch.size();
             continue;
         }

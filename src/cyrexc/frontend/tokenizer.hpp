@@ -9,17 +9,13 @@ namespace cyrex
 struct LexicalError : std::runtime_error
 {
     std::string message;
-    std::size_t line{};
-    std::size_t column{};
 
-    explicit constexpr LexicalError(const std::string_view message, const std::size_t line, const std::size_t column) :
-        std::runtime_error({message.begin(), message.end()}),
-        line(line),
-        column(column)
+    explicit constexpr LexicalError(const std::string_view message) :
+        std::runtime_error({message.begin(), message.end()})
     {
     }
 };
 
 // Throws: LexicalError
-std::vector<Token> tokenize(const std::string& sourceCode);
+std::vector<Token> tokenize(const std::string& source_code);
 } // namespace cyrex
