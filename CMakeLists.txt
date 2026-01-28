@@ -47,7 +47,8 @@ file(GLOB_RECURSE SRC_FILES "${PROJECT_SOURCE_DIR}/src/cyrexc/*.cpp")
 #
 add_library(CyrexC_lib STATIC ${SRC_FILES}
         src/cyrexc/frontend/tokens.hpp
-        src/cyrexc/frontend/reserved_words.hpp)
+        src/cyrexc/frontend/reserved_words.hpp
+        src/cyrexc/frontend/ast.hpp)
 target_compile_features(CyrexC_lib PUBLIC cxx_std_23)
 target_include_directories(CyrexC_lib PUBLIC "${PROJECT_SOURCE_DIR}/src/cyrexc")
 target_link_libraries(CyrexC_lib PUBLIC argparse magic_enum::magic_enum)
