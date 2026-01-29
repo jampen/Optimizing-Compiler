@@ -40,27 +40,28 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(argparse)
 
-file(GLOB_RECURSE SRC_FILES "${PROJECT_SOURCE_DIR}/src/cyrexc/*.cpp")
+FetchContent_Declare(
+        nlohmann_json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG v3.11.3
+)
+FetchContent_MakeAvailable(nlohmann_json)
 
+file(GLOB_RECURSE SRC_FILES "${PROJECT_SOURCE_DIR}/src/cyrexc/*.cpp")
+add_library(CyrexC_lib ${SRC_FILES})
 #
 # We compile CyrexC_lib and link CyrexC 
 #
-add_library(CyrexC_lib STATIC ${SRC_FILES}
-        src/cyrexc/frontend/tokens.hpp
-        src/cyrexc/frontend/reserved_words.hpp
-        src/cyrexc/frontend/ast.hpp)
 target_compile_features(CyrexC_lib PUBLIC cxx_std_23)
 target_include_directories(CyrexC_lib PUBLIC "${PROJECT_SOURCE_DIR}/src/cyrexc")
-target_link_libraries(CyrexC_lib PUBLIC argparse magic_enum::magic_enum)
+target_link_libraries(CyrexC_lib PUBLIC argparse magic_enum::magic_enum nlohmann_json::nlohmann_json)
 
 CyrexC_set_option(CLANG_TIDY_EXECUTABLE clang-tidy STRING "Override clang-tidy executable, requires minimum version 14")
 add_custom_target(tidy
         COMMAND ${CMAKE_COMMAND} -DCLANG_TIDY_EXECUTABLE=${CLANG_TIDY_EXECUTABLE} -DPROJECT_BINARY_DIR=${PROJECT_BINARY_DIR} -P ./cmake/Tidy.cmake
         WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} VERBATIM)
 
-add_executable(CyrexC "${PROJECT_SOURCE_DIR}/src/main.cpp"
-        src/cyrexc/util/cmap.hpp
-        tests/util/test_cmap.cpp)
+add_executable(CyrexC src/main.cpp)
 target_link_libraries(CyrexC PRIVATE CyrexC_lib)
 
 # --- TESTING ---

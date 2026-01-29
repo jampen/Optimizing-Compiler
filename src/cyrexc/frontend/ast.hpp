@@ -6,6 +6,7 @@
 #define CYREXC_AST_H
 
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <variant>
 #include <vector>
 
@@ -132,12 +133,15 @@ struct AST
     };
 #pragma endregion
 
+    [[nodiscard]] static nlohmann::json to_json(const AST& ast);
+
     using Top = std::variant<Function, Module, ParameterList>;
     using Expr = std::variant<BinaryExpr, IdentifierExpr, LiteralExpr, AssignExpr, WhileExpr, IfExpr>;
     using Stmt = std::variant<BlockStmt, ReturnStmt, VariableStmt, WhileStmt, IfStmt>;
 
     std::variant<Top, Expr, Stmt> data;
 };
+
 
 } // namespace cyrex
 
