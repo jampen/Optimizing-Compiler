@@ -75,8 +75,8 @@ struct AST
 
     struct LiteralExpr
     {
-        Type type;
         std::string value;
+        Type type;
     };
 
     struct WhileExpr
@@ -133,7 +133,7 @@ struct AST
     };
 #pragma endregion
 
-    [[nodiscard]] static nlohmann::json to_json(const AST& ast);
+    [[nodiscard]] static nlohmann::ordered_json to_json(const AST& ast);
 
     using Top = std::variant<Function, Module, ParameterList>;
     using Expr = std::variant<BinaryExpr, IdentifierExpr, LiteralExpr, AssignExpr, WhileExpr, IfExpr>;
